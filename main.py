@@ -1,14 +1,17 @@
 from openpyxl import Workbook
 from openpyxl.styles import *
-from openpyxl.drawing.image import Image
+import openpyxl.drawing.image as imagen
+from tkinter import *
+from tkinter import filedialog
 import datetime
+
 
 class Presupuesto():
 
     libro = Workbook()
     hoja1 = libro.active
 
-    LOGO_LONIDA = Image("images\logo.png")
+    LOGO_LONIDA = imagen.Image("images\logo.png")
     DIRECCION_NEGOCIO = "ALBERT EINSTEIN 502-SALTA"
     CELULAR = "CEL 3875381011"
     BORDE_TABLA = Border(left=Side(border_style='thin', color='000000'), right=Side(border_style='thin', color='000000'), top=Side(border_style='thin', color='000000'), bottom=Side(border_style='thin', color='000000'))
@@ -46,10 +49,12 @@ class Presupuesto():
     hoja1["C9"] = "PRECIO"
     hoja1["D9"] = "TOTAL"
     
-    def __init__(self, vendedor, cliente):
+    
+    def __init__(self, vendedor="DANIEL ANTONIO MEJIA", cliente="JOAQUIN SAJAMA"):
         self.hoja1["A3"] = "DE " + vendedor
         self.hoja1["A8"] = cliente
-        self.libro.save("A.xlsx")
+        self.nombre_presupuesto = "PRESUPUESTO " + cliente
+        self.libro.save(f"{self.nombre_presupuesto}.xlsx")
 
     def formato_de_tabla_accesorios(self, fila=10):
         self.hoja1[f"A{fila}"].alignment = Alignment(horizontal='center', vertical='center')
@@ -62,64 +67,126 @@ class Presupuesto():
         self.hoja1[f"B{fila}"].font = Font(size=9, italic=True)
         self.hoja1[f"C{fila}"].font = Font(size=9, italic=True)
         self.hoja1[f"D{fila}"].font = Font(size=9, italic=True)
-        self.libro.save("A.xlsx")
+        self.libro.save(f"{self.nombre_presupuesto}.xlsx")
 
     def colocar_accesorio(self, fila, cantidad, accesorio, precio):
         self.hoja1[f"A{fila}"] = cantidad
         self.hoja1[f"B{fila}"] = accesorio
         self.hoja1[f"C{fila}"] = precio
         self.hoja1[f"D{fila}"] = f"=A{fila}*C{fila}"
-        self.libro.save("A.xlsx")
+        self.libro.save(f"{self.nombre_presupuesto}.xlsx")
     
-    def formato_total_pago(self, fila, contado):
+    def formato_total_pago(self, fila):
         self.hoja1[f"C{fila}"].border = self.BORDE_TABLA
         self.hoja1[f"C{fila}"].font = Font(size=14, bold=True)
         self.hoja1[f"C{fila}"] = "TOTAL"
         self.hoja1[f"D{fila}"].border = self.BORDE_TABLA
         self.hoja1[f"D{fila}"].font = Font(size=14, bold=True)
         self.hoja1[f"D{fila}"] = f"=SUM(D10:D{fila-1})"
-        self.hoja1[f"B{fila+2}"].font = Font(size=14, bold=True)
-        self.hoja1[f"B{fila+2}"]= contado
-        self.libro.save("A.xlsx")
+        self.libro.save(f"{self.nombre_presupuesto}.xlsx")
+
+
+
+
+def mostrar_entry():
+
+    def mostrar_entradas(event):
+
+        def abrir_archivo():
+            ruta_archivo = filedialog.askopenfilename(filetypes=(("Archivos de Excel", "*.xlsx *.xls"),("Todos los archivos", "*.*")))
+  
+        global fila
+        global aux
+        global aux1
+        global lista_aux
+        global lista_aux1
+        global fila
+        aux = aux + 1
     
-    libro.save("A.xlsx")
+        texto = entrada.get()
+        texto = texto.upper()
+    
+        if aux == 1:
+            lista_aux.append(texto)
+            etiqueta_indicaciones.config(text="Ingrese el nombre del cliente")
+        elif aux == 2:
+            lista_aux.append(texto)
+            etiqueta_indicaciones.config(text="Ingrese el accesorio (para dejar de ingresar coloque 'Ninguno')")
+        elif aux >= 3:
+            aux1 = aux1 + 1
+            prespuesto = Presupuesto(lista_aux[0],lista_aux[1])
+            
+            if aux1 == 1 and texto != "NINGUNO":
+                lista_aux1.append(texto)
+                etiqueta_indicaciones.config(text="Ingrese la cantidad del accesorio")
+            elif aux1 == 2:
+                lista_aux1.append(texto)
+                etiqueta_indicaciones.config(text="Ingrese el precio del producto")
+            elif aux1 == 3:
+                lista_aux1.append(texto)
+                fila = fila + 1 
+                prespuesto.formato_de_tabla_accesorios(fila)
+                prespuesto.colocar_accesorio(fila, lista_aux1[1], lista_aux1[0], lista_aux1[2])
+                aux1 = 0
+                lista_aux1 = []
+                etiqueta_indicaciones.config(text="Ingrese el accesorio (para dejar de ingresar coloque 'Ninguno')")
+            else:
+                etiqueta_indicaciones.config(text="¡Tu presupuesto ya está listo, hecha un vistazo!")
+                boton_abrir = Button(ventana, text="Abrir Archivo",font="Georgia 12",bg="#2794C2",command=abrir_archivo)
+                boton_abrir.pack(pady=30)
+                prespuesto.formato_total_pago(fila+1)
+            
+        etiqueta_mostrar_entrada.config(text=f"Ingresaste: {texto}")
+        entrada.delete(0,END)
+    
+    etiqueta_indicaciones = Label(ventana)
+    etiqueta_indicaciones = Label(ventana,text="Ingrese el nombre del vendedor, que realizará el presupuesto",font="Georgia 14",bg="#92D8F5")
+    etiqueta_indicaciones.pack(pady=15)
 
+    entrada = Entry(ventana,font= "Georgia 14",bg="#AFE1F6")
+    entrada.config(width=40)
+    entrada.pack(pady=20)
+    etiqueta_mostrar_entrada = Label(ventana,text="",font="Georgia 14",bg="#92D8F5")
+    etiqueta_mostrar_entrada.pack(pady=25)
+    
+    entrada.bind("<Return>", lambda event: mostrar_entradas(event))
+    entrada.focus_set()
+    
 
-print("BINEVENIDO A LONXCEL, una aplicación para hacer presupuestos LONIDA")
-print()
-nombre_vendedor = input("Ingrese el nombre del vendedor que realiza el presupuesto: ").upper()
-nombre_cliente = input("¿Para quién desea realizar el presupuesto? ").upper()
-apunte = Presupuesto(nombre_vendedor, nombre_cliente)
-numero_de_accesorio = 0
 fila = 9
-total = 0
-while True:
-    fila = fila + 1 
-    numero_de_accesorio = numero_de_accesorio + 1
-    print(f"Accesorio número {numero_de_accesorio}")
-    accesorio = input(f"Ingrese el accesorio (para dejar de ingresar coloque 'NINGUNO'): ").upper()
-    if accesorio == "NINGUNO":
-        break
-    cantidad_accesorio = input("Ingrese la cantidad del accesorio: ")
-    precio = input("Ingrese el precio del producto: ")
-    precio_pesos =  "$ " + precio
-    
-    cantidad_accesorio = int(cantidad_accesorio)
-    precio = int(precio)
-    total = total + (cantidad_accesorio * precio)
+aux = 0
+aux1 = 0
+lista_aux =[]
+lista_aux1 = []
 
-    apunte.formato_de_tabla_accesorios(fila)
-    apunte.colocar_accesorio(fila, cantidad_accesorio, accesorio, precio)
-    
+ventana = Tk()
 
-print(f"El total es {total}")
-total_contado = input("Ingrese cuánto sería el pago total de contado: ")
-pago_contado = f"PAGO CONTADO $ {total_contado}"
-apunte.formato_total_pago(fila, pago_contado)
+ancho_pantalla = ventana.winfo_screenwidth()
+alto_pantalla = ventana.winfo_screenheight()
+x = (ancho_pantalla - 900) // 2
+y = (alto_pantalla - 750) // 2
+ventana.geometry(f"{900}x{750}+{x}+{y}")
+
+ventana.title("LONXCEL")
+ventana.iconbitmap("images\logo.ico")
+ventana.geometry("900x700")
+ventana.config(bg="#92D8F5")
+
+etiqueta_bienvenida = Label(ventana,text="¡Bienvenido a Lonxcel!",font="Georgia 18",bg="#4ABAE7")
+etiqueta_bienvenida.config(height=2,width=20)
+etiqueta_bienvenida.pack(pady=10)
+
+mensaje_comenzar = "Para realizar un presupuesto, pulse 'Comenzar'"
+
+etiqueta_aviso = Label(ventana, text=mensaje_comenzar,font="Georgia 14",bg="#92D8F5" )
+etiqueta_aviso.pack(pady=12)
+
+boton_comenzar = Button(ventana,text="Comenzar",font="Georgia 12",bg="#2794C2",command=mostrar_entry)
+boton_comenzar.config(height=1,width=10)
+boton_comenzar.pack(pady=15)
 
 
-
-
+ventana.mainloop()
 
 
 
