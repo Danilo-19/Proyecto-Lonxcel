@@ -3,6 +3,8 @@ from openpyxl.styles import *
 import openpyxl.drawing.image as imagen
 from tkinter import *
 from tkinter import filedialog
+import subprocess as sb
+from tkinter import messagebox
 import datetime
 
 
@@ -14,8 +16,11 @@ class Presupuesto():
     LOGO_LONIDA = imagen.Image("images\logo.png")
     DIRECCION_NEGOCIO = "ALBERT EINSTEIN 502-SALTA"
     CELULAR = "CEL 3875381011"
-    BORDE_TABLA = Border(left=Side(border_style='thin', color='000000'), right=Side(border_style='thin', color='000000'), top=Side(border_style='thin', color='000000'), bottom=Side(border_style='thin', color='000000'))
-    
+    BORDE_TABLA = Border(left=Side(border_style='thin', color='000000'),
+                         right=Side(border_style='thin', color='000000'),
+                         top=Side(border_style='thin', color='000000'),
+                         bottom=Side(border_style='thin', color='000000')
+    )
     
     hoja1.row_dimensions[2].height = 95
     hoja1.row_dimensions[6].height = 20
@@ -35,6 +40,7 @@ class Presupuesto():
     hoja1["D9"].border = BORDE_TABLA
     for i in range(2,9):
         hoja1.merge_cells(f"A{i}:B{i}")
+
     fecha = datetime.datetime.now()
     fecha_actual = fecha.strftime("%d/%m/%Y")
 
@@ -48,7 +54,6 @@ class Presupuesto():
     hoja1["B9"] = "ACCESORIOS"
     hoja1["C9"] = "PRECIO"
     hoja1["D9"] = "TOTAL"
-    
     
     def __init__(self, vendedor="DANIEL ANTONIO MEJIA", cliente="JOAQUIN SAJAMA"):
         self.hoja1["A3"] = "DE " + vendedor
@@ -78,14 +83,12 @@ class Presupuesto():
     
     def formato_total_pago(self, fila):
         self.hoja1[f"C{fila}"].border = self.BORDE_TABLA
-        self.hoja1[f"C{fila}"].font = Font(size=14, bold=True)
-        self.hoja1[f"C{fila}"] = "TOTAL"
         self.hoja1[f"D{fila}"].border = self.BORDE_TABLA
+        self.hoja1[f"C{fila}"].font = Font(size=14, bold=True)
         self.hoja1[f"D{fila}"].font = Font(size=14, bold=True)
+        self.hoja1[f"C{fila}"] = "TOTAL"
         self.hoja1[f"D{fila}"] = f"=SUM(D10:D{fila-1})"
         self.libro.save(f"{self.nombre_presupuesto}.xlsx")
-
-
 
 
 def mostrar_entry():
@@ -93,8 +96,17 @@ def mostrar_entry():
     def mostrar_entradas(event):
 
         def abrir_archivo():
-            ruta_archivo = filedialog.askopenfilename(filetypes=(("Archivos de Excel", "*.xlsx *.xls"),("Todos los archivos", "*.*")))
-  
+            archivo = filedialog.askopenfilename(
+                title="Seleccionar archivo Excel",
+                filetypes=[("Archivos Excel", "*.xlsx")]
+            )
+            if archivo:
+                try:
+                    sb.run(["start", archivo], shell=True)  # Abrir con app predeterminada
+                    messagebox.showinfo("Éxito", "Archivo abierto correctamente")
+                except Exception as e:
+                    messagebox.showerror("Error", f"No se pudo abrir el archivo:\n{str(e)}")
+                    
         global fila
         global aux
         global aux1
@@ -131,11 +143,11 @@ def mostrar_entry():
                 lista_aux1 = []
                 etiqueta_indicaciones.config(text="Ingrese el accesorio (para dejar de ingresar coloque 'Ninguno')")
             else:
+                prespuesto.formato_total_pago(fila+1)
                 etiqueta_indicaciones.config(text="¡Tu presupuesto ya está listo, hecha un vistazo!")
                 boton_abrir = Button(ventana, text="Abrir Archivo",font="Georgia 12",bg="#2794C2",command=abrir_archivo)
                 boton_abrir.pack(pady=30)
-                prespuesto.formato_total_pago(fila+1)
-            
+              
         etiqueta_mostrar_entrada.config(text=f"Ingresaste: {texto}")
         entrada.delete(0,END)
     
@@ -146,6 +158,7 @@ def mostrar_entry():
     entrada = Entry(ventana,font= "Georgia 14",bg="#AFE1F6")
     entrada.config(width=40)
     entrada.pack(pady=20)
+
     etiqueta_mostrar_entrada = Label(ventana,text="",font="Georgia 14",bg="#92D8F5")
     etiqueta_mostrar_entrada.pack(pady=25)
     
@@ -176,15 +189,12 @@ etiqueta_bienvenida = Label(ventana,text="¡Bienvenido a Lonxcel!",font="Georgia
 etiqueta_bienvenida.config(height=2,width=20)
 etiqueta_bienvenida.pack(pady=10)
 
-mensaje_comenzar = "Para realizar un presupuesto, pulse 'Comenzar'"
-
-etiqueta_aviso = Label(ventana, text=mensaje_comenzar,font="Georgia 14",bg="#92D8F5" )
+etiqueta_aviso = Label(ventana, text="Para realizar un presupuesto, pulse 'Comenzar'",font="Georgia 14",bg="#92D8F5" )
 etiqueta_aviso.pack(pady=12)
 
 boton_comenzar = Button(ventana,text="Comenzar",font="Georgia 12",bg="#2794C2",command=mostrar_entry)
 boton_comenzar.config(height=1,width=10)
 boton_comenzar.pack(pady=15)
-
 
 ventana.mainloop()
 
