@@ -1,1 +1,4 @@
 openpyxl
+pip install openpyxl
+pillow
+pip install pillow
